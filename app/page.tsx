@@ -7,6 +7,7 @@ interface MenuItem {
   name: string
   price: string
   description?: string
+  image?: string // Optional image URL
 }
 
 export default function OptimizedMenu() {
@@ -14,6 +15,8 @@ export default function OptimizedMenu() {
   const [activeCategory, setActiveCategory] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [isScrolling, setIsScrolling] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // New state for sidebar
+
 
   // Refs
   const categoryRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -29,6 +32,10 @@ export default function OptimizedMenu() {
     },
     {} as Record<string, MenuItem[]>,
   );
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarOpen(prev => !prev);
+  }, []);
 
   const sortedCategories = Object.keys(groupedMenuItems).sort();
 
@@ -161,9 +168,33 @@ export default function OptimizedMenu() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 font-sans text-gray-800">
       {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+        <header className="fixed top-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
         <div className="flex items-center justify-between p-4 max-w-7xl mx-auto">
-          <div className="relative flex-grow mr-4">
+          {/* Menu Button */}
+          <button
+            onClick={toggleSidebar}
+            className="p-2 mr-4 text-gray-600 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+            aria-label="Open menu"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="6" x2="20" y2="6" />
+              <line x1="4" y1="18" x2="20" y2="18" />
+            </svg>
+          </button>
+          
+          {/* Search Bar */}
+          <div className="relative flex-grow">
             <input
               type="text"
               placeholder="Search your craving..."
@@ -187,36 +218,83 @@ export default function OptimizedMenu() {
               <path d="m21 21-4.3-4.3" />
             </svg>
           </div>
-          <button className="flex items-center px-5 py-3 bg-white border border-gray-200 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="mr-2"
-            >
-              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-            </svg>
-            <span className="font-medium text-base">Filters</span>
-          </button>
         </div>
       </header>
 
+      {/* Sidebar and Overlay */}
+      {isSidebarOpen && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+            onClick={toggleSidebar}
+          ></div>
+          
+          {/* Sidebar */}
+          <div className="fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto">
+            <div className="p-4 flex items-center justify-between border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Menu</h2>
+              <button
+                onClick={toggleSidebar}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <ul className="p-4">
+              {menuData.map((section) => (
+                <li key={section.title} className="mb-2">
+                  <a
+                    href={`#${section.title.toLowerCase().replace(/\s/g, "-")}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      scrollToCategory(section.title);
+                      toggleSidebar(); // Close sidebar after clicking
+                    }}
+                    className={`block py-2 px-4 rounded-lg text-lg font-medium transition-colors duration-200 ${
+                      activeCategory === section.title
+                        ? "bg-blue-100 text-blue-600"
+                        : "text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    {section.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
+
       {/* Fixed Category Navigation */}
       <nav className="fixed top-20 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
-        <div className="py-4 px-4 max-w-7xl mx-auto">
-          <div
-            ref={categoryNavRef}
-            className="overflow-x-auto scrollbar-hide"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            <div className="flex space-x-3 pb-2 min-w-max">
-              {filteredCategories.map((category) => (
+      <div className="py-4 px-4 max-w-7xl mx-auto">
+        <div
+          ref={categoryNavRef}
+          className="overflow-x-auto scrollbar-hide"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          <div className="flex space-x-3 pb-2 min-w-max">
+            {menuData.map((section) => {
+              const category = section.title;
+              // Check if the category is in the filtered list before rendering
+              if (!filteredCategories.includes(category)) {
+                return null; // Skip this category if it doesn't match the search filter
+              }
+              return (
                 <button
                   key={category}
                   ref={(el) => {
@@ -238,81 +316,102 @@ export default function OptimizedMenu() {
                   </div>
                   <span className="text-base font-medium">{category}</span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
         </div>
-      </nav>
+      </div>
+    </nav>
 
-      {/* Main Content */}
-      <main className="pt-40 pb-20 px-4 max-w-7xl mx-auto">
+        {/* Main Content */}
+      <main className="pt-40 pb-20 px-4 max-w-7xl mx-auto ">
         {filteredCategories.length > 0 ? (
           <>
-            {filteredCategories.map((category) => (
-              <section
-                key={category}
-                ref={(el) => {
-                  categoryRefs.current[category] = el;
-                }}
-                data-category={category}
-                className="bg-white rounded-xl shadow-lg mb-8 overflow-hidden"
-              >
-                {/* Category Header */}
-                <button
-                  className="w-full flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  onClick={() => toggleCategory(category)}
+            {menuData
+              .filter(section => filteredCategories.includes(section.title))
+              .map((section) => (
+                <section
+                  key={section.title}
+                  ref={(el) => {
+                    categoryRefs.current[section.title] = el;
+                  }}
+                  data-category={section.title}
+                  className="bg-white rounded-xl shadow-lg mb-8 overflow-hidden "
                 >
-                  <h2 className="text-2xl font-bold text-gray-900 flex items-center">
-                    {category}
-                    <span className="ml-2 text-base font-medium text-gray-500">
-                      ({groupedMenuItems[category].length})
-                    </span>
-                  </h2>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={`text-gray-600 transition-transform duration-300 ${
-                      expandedCategories[category] ? "rotate-180" : ""
-                    }`}
+                  {/* Category Header */}
+                  <button
+                    className="w-full flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onClick={() => toggleCategory(section.title)}
                   >
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </button>
+                    <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                      {section.title}
+                      <span className="ml-2 text-base font-medium text-gray-500">
+                        ({section.items.length})
+                      </span>
+                    </h2>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={`text-gray-600 transition-transform duration-300 ${
+                        expandedCategories[section.title] ? "rotate-180" : ""
+                      }`}
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
 
-                {/* Menu Items */}
-                {expandedCategories[category] && (
-                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {groupedMenuItems[category]
-                      .filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()) || (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())))
-                      .map((item) => (
-                        <div
-                          key={item.name} // Using item.name as key, assuming names are unique within a category
-                          className="bg-white border border-gray-100 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02]"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <h3 className="text-lg font-semibold text-gray-800 flex items-center flex-1">
-                              <span className="line-clamp-2">{item.name}</span>
-                            </h3>
-                            <span className="text-xl font-bold text-blue-600 ml-2">{item.price}</span>
+                  {/* Menu Items */}
+                  {expandedCategories[section.title] && (
+                    <div className="p-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {section.items
+                        .filter((item) =>
+                          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
+                        )
+                        .map((item) => (
+                          <div
+                            key={item.name}
+                            className="bg-white border border-gray-100 rounded-lg shadow-sm p-3 flex items-center hover:shadow-md transition-all duration-200"
+                          >
+                            {/* Text Content */}
+                            <div className="flex-1 mr-3">
+                              <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                                {item.name}
+                              </h3>
+                              {item.description && (
+                                <p className="text-sm text-gray-600 mt-0.5 line-clamp-2">
+                                  {item.description}
+                                </p>
+                              )}
+                              <div className="flex items-center justify-between mt-2">
+                                <span className="text-xl font-bold text-green-600">
+                                  {item.price}
+                                </span>
+                              </div>
+                            </div>
+                            {/* Image */}
+                            {item.image !== '/burger.jpg' && (
+                              <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
                           </div>
-                          {item.description && (
-                            <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                              {item.description}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </section>
-            ))}
+                        ))}
+                    </div>
+                  )}
+                </section>
+              ))}
           </>
         ) : (
           <div className="text-center py-20">

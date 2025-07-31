@@ -13,7 +13,7 @@ const config: Config = {
         inter: ['Inter', 'sans-serif'], // Define Inter font
       },
       colors: {
-        primary: '#fa6498', // Light Pink (page background)
+        primary: '#FFFFFF', // Light Pink (page background)
         secondary: '#E91E63', // Dark Pink (buttons, headers)
         accent: '#880E4F', // Dark Dark Pink (headings, specialty text)
         textLight: '#FFFFFF', // White for main text
